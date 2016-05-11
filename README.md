@@ -7,10 +7,11 @@
  - Task details screen (title, description)
  - Task add/edit screen (title, description are fully editable)
  - ListView/RecyclerView and ContentProvider, as usual
+ - Tags for tasks (sub-list in detail screen)
 
 ## Extra points
   - Sort by date or name: +3
   - Important: +3
 
 ## Deadline
-11.05.2016 19:10
+11.05.2016 19:20
