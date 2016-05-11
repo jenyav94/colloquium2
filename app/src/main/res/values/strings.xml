@@ -1,3 +1,11 @@
 <resources>
-    <string name="app_name">colloquium2</string>
+    <string name="app_name">TODO List</string>
+    <string name="date_format">yyyy-MM-dd HH:mm</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="new_task">New Task</string>
+    <string name="delete">Delete</string>
+    <string name="Add">Add</string>
+    <string name="action_settings">settings</string>
+    <string name="action_add">add</string>
 </resources>
