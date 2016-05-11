@@ -53,8 +53,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         cursorAdapterListView = new TaskListAdapter(this, null, 0);
         listViewTasks.setAdapter(cursorAdapterListView);
 
-        addButton = (Button) findViewById(R.id.add_button);
-        addEditText = (EditText) findViewById(R.id.add_editText);
 
 //        addButton.setOnClickListener(new View.OnClickListener() {
 //            @Override
