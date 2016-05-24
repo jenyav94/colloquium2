@@ -1,7 +1,6 @@
 package ru.csc.vikulov.todolist;
 
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.net.Uri;
@@ -16,13 +15,11 @@ import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.ListView;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Locale;
-
 import ru.csc.vikulov.todolist.contentprovider.FeedsTable;
 import ru.csc.vikulov.todolist.contentprovider.TagsTable;
 import ru.csc.vikulov.todolist.contentprovider.ToDoListContentProvider;
+import ru.csc.vikulov.todolist.model.SubTask;
+import ru.csc.vikulov.todolist.model.Task;
 
 public class DescriptionActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor> {
 
@@ -45,16 +42,20 @@ public class DescriptionActivity extends AppCompatActivity implements LoaderMana
         }
 
         title = (EditText) findViewById(R.id.title_d);
-        description = (EditText) findViewById(R.id.description_d);
-        listView = (ListView) findViewById(R.id.listView_d);
 
+        description = (EditText) findViewById(R.id.description_d);
+
+        listView = (ListView) findViewById(R.id.listView_d);
         cursorAdapterListView = new TagListAdapter(this, null, 0);
         listView.setAdapter(cursorAdapterListView);
 
-        if (!newTask) {
+        if (newTask) {
+            Uri uri = getContentResolver().insert(ToDoListContentProvider.ENTRIES_URI, new Task().toCursor());
+            cursor_id = uri.getLastPathSegment();
+        } else {
             getSupportLoaderManager().initLoader(1, null, this);
-            getSupportLoaderManager().initLoader(2, null, this);
         }
+        getSupportLoaderManager().initLoader(2, null, this);
     }
 
     @Override
@@ -78,12 +79,11 @@ public class DescriptionActivity extends AppCompatActivity implements LoaderMana
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
                                 String newTag = taskDescription.getText().toString();
-                                ContentValues values = new ContentValues();
-                                values.put(TagsTable.COLUMN_TASK, newTag);
-//                                if (!newTask){
-//                                    values.put(TagsTable.COLUMN_TASK_ID, cursor_id);
-//                                }
-                                getContentResolver().insert(ToDoListContentProvider.TAGS_URI, values);
+
+                                SubTask subTask = new SubTask(cursor_id, newTag);
+                                getContentResolver().insert(
+                                        ToDoListContentProvider.TAGS_URI,
+                                        subTask.toCursor());
                             }
                         })
                         .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -102,29 +102,17 @@ public class DescriptionActivity extends AppCompatActivity implements LoaderMana
 
     @Override
     protected void onDestroy() {
-        ContentValues values = new ContentValues();
-
         String title_ = title.getText().toString();
         String description_ = description.getText().toString();
 
-        SimpleDateFormat format = new SimpleDateFormat(getString(R.string.date_format), Locale.getDefault());
+        Task task = new Task(title_, description_);
 
-        values.put(FeedsTable.COLUMN_TITLE, title_);
-        values.put(FeedsTable.COLUMN_DESCRIPTION, description_);
-        values.put(FeedsTable.COLUMN_DATE, format.format(new Date()));
-        values.put(FeedsTable.COLUMN_DONE, MainActivity.FALSE);
-        values.put(FeedsTable.COLUMN_PRIOR, MainActivity.FALSE);
+        getContentResolver().update(
+                Uri.withAppendedPath(ToDoListContentProvider.ENTRIES_URI, cursor_id),
+                task.toCursor(),
+                null,
+                null);
 
-        if(newTask) {
-            getContentResolver().insert(MainActivity.ENTRIES_URI, values);
-        }
-        else{
-            getContentResolver().update(
-                    Uri.withAppendedPath(MainActivity.ENTRIES_URI, cursor_id),
-                    values,
-                    null,
-                    null);
-        }
         super.onDestroy();
     }
 
@@ -132,9 +120,16 @@ public class DescriptionActivity extends AppCompatActivity implements LoaderMana
     public Loader<Cursor> onCreateLoader(int id, Bundle args) {
         switch (id) {
             case 1:
-                return new CursorLoader(this, Uri.withAppendedPath(MainActivity.ENTRIES_URI, cursor_id), null, null, null, null);
+                return new CursorLoader(this, Uri.withAppendedPath(ToDoListContentProvider.ENTRIES_URI, cursor_id), null, null, null, null);
             case 2:
-                return new CursorLoader(this, ToDoListContentProvider.TAGS_URI, null, null, null, null);
+                String selection = TagsTable.COLUMN_TASK_ID + " = ?";
+                String[] selectionArgs = new String[]{cursor_id};
+                return new CursorLoader(this,
+                        ToDoListContentProvider.TAGS_URI,
+                        null,
+                        selection,
+                        selectionArgs,
+                        null);
         }
         return null;
     }

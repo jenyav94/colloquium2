@@ -93,7 +93,7 @@ public class ToDoListContentProvider extends ContentProvider {
         if (BuildConfig.DEBUG) {
             Log.d(LOG_TAG, "insert, " + uri.toString());
         }
-        Uri resultUri = null;
+        Uri resultUri;
         long rowID;
 
         switch (uriMatcher.match(uri)){
@@ -107,10 +107,9 @@ public class ToDoListContentProvider extends ContentProvider {
                 resultUri = ContentUris.withAppendedId(uri, rowID);
 
                 break;
+            default:
+                throw new IllegalArgumentException("Wrong URI: " + uri);
         }
-
-//        if (uriMatcher.match(uri) != ENTRIES)
-//            throw new IllegalArgumentException("Wrong URI: " + uri);
 
 //        long rowID = databaseHelper.getWritableDatabase().insert(FeedsTable.TABLE_NAME, null, values);
 //        Uri resultUri = ContentUris.withAppendedId(uri, rowID);

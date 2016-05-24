@@ -1,7 +1,6 @@
 package ru.csc.vikulov.todolist;
 
 import android.app.AlertDialog;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -13,11 +12,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.CursorAdapter;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import ru.csc.vikulov.todolist.contentprovider.FeedsTable;
+import ru.csc.vikulov.todolist.contentprovider.ToDoListContentProvider;
+import ru.csc.vikulov.todolist.model.Task;
 
 
 public class TaskListAdapter extends CursorAdapter {
@@ -72,6 +72,8 @@ public class TaskListAdapter extends CursorAdapter {
         final String prior = cursor.getString(cursor.getColumnIndex(FeedsTable.COLUMN_PRIOR));
         final String _id = cursor.getString(cursor.getColumnIndex(FeedsTable._ID));
 
+        final Task task = new Task(title, "", date, done, prior);
+
         final ViewHolder holder = (ViewHolder) view.getTag();
 
         if (holder != null) {
@@ -104,7 +106,7 @@ public class TaskListAdapter extends CursorAdapter {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
                                         context.getContentResolver().delete(
-                                                Uri.withAppendedPath(MainActivity.ENTRIES_URI, _id),
+                                                Uri.withAppendedPath(ToDoListContentProvider.ENTRIES_URI, _id),
                                                 null,
                                                 null);
                                     }
@@ -118,38 +120,6 @@ public class TaskListAdapter extends CursorAdapter {
                                 .setCancelable(false)
                                 .show();
 
-                    } else {
-                        final EditText taskDescription = new EditText(context);
-                        taskDescription.setText(title);
-
-                        new AlertDialog.Builder(context)
-                                .setTitle(R.string.new_task)
-                                .setView(taskDescription)
-                                .setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        String newTask = taskDescription.getText().toString();
-                                        ContentValues values = new ContentValues();
-                                        values.put(FeedsTable.COLUMN_TITLE, newTask);
-                                        values.put(FeedsTable.COLUMN_DATE, date);
-                                        values.put(FeedsTable.COLUMN_DONE, done);
-                                        values.put(FeedsTable.COLUMN_PRIOR, prior);
-
-                                        context.getContentResolver().update(
-                                                Uri.withAppendedPath(MainActivity.ENTRIES_URI, _id),
-                                                values,
-                                                null,
-                                                null);
-                                    }
-                                })
-                                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        dialog.dismiss();
-                                    }
-                                })
-                                .setCancelable(false)
-                                .show();
                     }
 
                     return true;
@@ -160,48 +130,45 @@ public class TaskListAdapter extends CursorAdapter {
             holder.checkBox.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ContentValues values = new ContentValues();
-                    values.put(FeedsTable.COLUMN_TITLE, title);
-                    values.put(FeedsTable.COLUMN_DATE, date);
-                    values.put(FeedsTable.COLUMN_PRIOR, prior);
 
                     if (holder.checkBox.isChecked()) {
-                        values.put(FeedsTable.COLUMN_DONE, TRUE);
+                        task.setDone(TRUE);
                     } else {
-                        values.put(FeedsTable.COLUMN_DONE, FALSE);
+                        task.setDone(FALSE);
                     }
 
-                    context.getContentResolver().update(Uri.withAppendedPath(MainActivity.ENTRIES_URI, _id),
-                            values, null, null);
+                    context.getContentResolver().update(
+                            Uri.withAppendedPath(ToDoListContentProvider.ENTRIES_URI, _id),
+                            task.toCursor(),
+                            null,
+                            null);
                 }
             });
 
             holder.checkBoxStar.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    ContentValues values = new ContentValues();
-                    values.put(FeedsTable.COLUMN_TITLE, title);
-                    values.put(FeedsTable.COLUMN_DATE, date);
-                    values.put(FeedsTable.COLUMN_DONE, done);
-
                     if (holder.checkBoxStar.isChecked()) {
-                        values.put(FeedsTable.COLUMN_PRIOR, TRUE);
+                        task.setPrior(TRUE);
                     } else {
-                        values.put(FeedsTable.COLUMN_PRIOR, FALSE);
+                        task.setPrior(FALSE);
                     }
 
-                    context.getContentResolver().update(Uri.withAppendedPath(MainActivity.ENTRIES_URI, _id),
-                            values, null, null);
+                    context.getContentResolver().update(
+                            Uri.withAppendedPath(ToDoListContentProvider.ENTRIES_URI, _id),
+                            task.toCursor(),
+                            null,
+                            null);
                 }
             });
 
-            holder.textView.setOnClickListener(new View.OnClickListener() {
+            holder.textAll.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     Intent intent = new Intent(context, DescriptionActivity.class);
                     intent
                             .putExtra(CURSOR_ID, _id)
-                    .putExtra(MainActivity.NEW_TASK, false);
+                            .putExtra(MainActivity.NEW_TASK, false);
                     context.startActivity(intent);
                 }
             });
